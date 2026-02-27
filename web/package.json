@@ -1,0 +1,13 @@
+{
+  "name": "ant-dungeon-web",
+  "version": "1.0.0",
+  "description": "Ant Dungeon Web Client",
+  "scripts": {
+    "start": "npx serve . -p 3000",
+    "dev": "browser-sync start --server --port 3000 --files '*.html,js/**/*.js,css/**/*.css' --no-notify"
+  },
+  "devDependencies": {
+    "browser-sync": "^3.0.3",
+    "serve": "^14.2.1"
+  }
+}

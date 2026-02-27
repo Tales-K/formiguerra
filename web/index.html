@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formiguerra</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* ── Main layout ── */
+    #game-layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* ── Map area (left, scrollable) ── */
+    #map-area {
+      flex: 1;
+      overflow: auto;
+      background: #0d0d1a;
+      position: relative;
+      min-width: 0;
+    }
+
+    #hex-canvas {
+      display: block;
+      cursor: crosshair;
+      /* zoom applied via JS: transform: scale(z); transform-origin: top left */
+    }
+
+    /* Placement hint banner at the bottom of the map area */
+    #placement-hint {
+      display: none;
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(0, 180, 90, 0.90);
+      color: #001a0a;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 6px 12px;
+      letter-spacing: 0.04em;
+      z-index: 10;
+    }
+
+    /* ── Sidebar (right) ── */
+    #sidebar {
+      width: 230px;
+      min-width: 230px;
+      background: #16162a;
+      border-left: 2px solid #2a2a4a;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 14px 12px 20px;
+      gap: 18px;
+    }
+
+    /* New game button */
+    #new-game-btn {
+      background: #c9a84c;
+      color: #1a1a2e;
+      border: none;
+      padding: 9px 0;
+      width: 100%;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: 5px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      transition: background 0.15s;
+    }
+    #new-game-btn:hover    { background: #e0c060; }
+    #new-game-btn:disabled { background: #444; cursor: not-allowed; }
+
+    /* PR display */
+    #pr-display {
+      font-size: 0.78rem;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      line-height: 1.6;
+    }
+    #pr-count {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #c9a84c;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* Section headers */
+    .sidebar-header {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #777;
+      margin-bottom: 8px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #2a2a4a;
+    }
+
+    /* ── Store cards ── */
+    #store-cards { display: flex; flex-direction: column; gap: 7px; }
+
+    .store-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e1e38;
+      border: 1px solid #2a2a4a;
+      border-radius: 6px;
+      padding: 7px 8px;
+      transition: border-color 0.15s;
+    }
+    .store-card:hover { border-color: #4a4a7a; }
+
+    .store-card img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .store-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .store-name {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #ddd;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .store-stats { font-size: 0.6rem; color: #777; }
+    .store-cost  { font-size: 0.72rem; color: #c9a84c; font-weight: 700; }
+
+    .buy-btn {
+      background: #c9a84c;
+      color: #1a1a2e;
+      border: none;
+      padding: 5px 9px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .buy-btn:hover    { background: #e0c060; }
+    .buy-btn:disabled { background: #3a3a3a; color: #666; cursor: not-allowed; }
+
+    /* Dim store while in placement mode */
+    #sidebar[data-placing="1"] #store-section {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    /* ── Available ants ── */
+    #available-ants { display: flex; flex-direction: column; gap: 6px; }
+
+    .avail-card {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1a2a1e;
+      border: 1px solid #2a4a30;
+      border-radius: 6px;
+      padding: 7px 8px;
+    }
+
+    .avail-card img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .avail-card span {
+      flex: 1;
+      font-size: 0.78rem;
+      color: #b0ddb8;
+      font-weight: 600;
+    }
+
+    .place-btn {
+      background: #1e6e30;
+      color: #a0ffb8;
+      border: 1px solid #2a9a46;
+      padding: 5px 9px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .place-btn:hover    { background: #2a8a40; }
+    .place-btn:disabled { background: #282828; color: #555; border-color: #333; cursor: not-allowed; }
+
+    .sidebar-empty {
+      font-size: 0.74rem;
+      color: #555;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    /* ── Tooltip ── */
+    #tooltip {
+      position: fixed;
+      display: none;
+      background: rgba(10, 10, 28, 0.92);
+      color: #c9c9e8;
+      border: 1px solid #44447a;
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-family: 'Courier New', monospace;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-layout">
+
+  <!-- Left: zoomable, scrollable map -->
+  <div id="map-area">
+    <canvas id="hex-canvas"></canvas>
+    <div id="placement-hint">
+      Clique numa célula verde para posicionar · ESC para cancelar
+    </div>
+  </div>
+
+  <!-- Right: sidebar -->
+  <div id="sidebar" data-placing="0">
+
+    <button id="new-game-btn">Nova Partida</button>
+
+    <div id="pr-display">
+      Pontos de Reforço
+      <span id="pr-count">—</span>
+    </div>
+
+    <div id="store-section">
+      <div class="sidebar-header">Loja</div>
+      <div id="store-cards"></div>
+    </div>
+
+    <div id="available-section">
+      <div class="sidebar-header">Formigas Disponíveis</div>
+      <div id="available-ants">
+        <p class="sidebar-empty">Inicie uma nova partida.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

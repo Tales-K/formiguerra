@@ -1,0 +1,8 @@
+- Each file should have a single responsibility.
+- Use components to break down complex functionality into smaller, reusable pieces.
+- Focus on reusability.
+- Before creating, check if a component already exists for that.
+- Things should be in folders that make sense, categoryze stuff.
+- Use `mv` or `rm` to move or delete files.
+- Files cannot exceed 300 lines of code. Breaking it down if bigger.
+- Don't use comments, remove the ones you see.
