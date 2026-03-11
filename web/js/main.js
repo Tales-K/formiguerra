@@ -14,6 +14,7 @@ import {
   setPlacingMode,
 } from "./sidebar.js";
 import { initZoom, screenToCanvas, handleWheel } from "./zoom.js";
+import { generateFullName } from "./nameGenerator.js";
 
 const API_URL = "http://localhost:3001";
 const START_PR = 8;
@@ -48,8 +49,25 @@ function occupiedSet() {
 function reachableCells(ant) {
   const origin = cellById.get(`${ant.col}:${ant.row}`);
   if (!origin) return [];
+  const mov = ANT_DEFS[ant.type]?.stats?.mov ?? 1;
   const occ = occupiedSet();
-  return getNeighborCells(origin, cellById).filter((c) => !occ.has(c.id));
+  const visited = new Map(); // id → distance
+  const queue = [{ cell: origin, dist: 0 }];
+  visited.set(origin.id, 0);
+  while (queue.length) {
+    const { cell, dist } = queue.shift();
+    if (dist >= mov) continue;
+    for (const nb of getNeighborCells(cell, cellById)) {
+      if (visited.has(nb.id)) continue;
+      if (nb.type === "water") continue;
+      visited.set(nb.id, dist + 1);
+      if (!occ.has(nb.id)) queue.push({ cell: nb, dist: dist + 1 });
+    }
+  }
+  visited.delete(origin.id);
+  return [...visited.keys()]
+    .filter((id) => !occ.has(id))
+    .map((id) => cellById.get(id));
 }
 
 function getAntAtPoint(px, py) {
@@ -120,7 +138,14 @@ function onBuy(type) {
   if (!def || pr < def.stats.cost) return;
   pr -= def.stats.cost;
   updatePR(pr);
-  const ant = { id: freshId(), type, owner: "player", col: 0, row: 0 };
+  const ant = {
+    id: freshId(),
+    name: generateFullName(),
+    type,
+    owner: "player",
+    col: 0,
+    row: 0,
+  };
   availableAnts.push(ant);
   renderAvailableAnts(availableAnts);
 }

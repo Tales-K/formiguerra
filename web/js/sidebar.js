@@ -42,7 +42,7 @@ export function renderAvailableAnts(ants) {
     img.alt = def.label;
 
     const name = document.createElement("span");
-    name.textContent = def.label;
+    name.textContent = ant.name ?? def.label;
 
     const btn = document.createElement("button");
     btn.className = "place-btn";

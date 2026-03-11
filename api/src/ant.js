@@ -1,4 +1,6 @@
-const ANT_TYPES = ['worker', 'mage', 'fighter', 'knight', 'archer'];
+const { generateFullName } = require("./nameGenerator");
+
+const ANT_TYPES = ["worker", "mage", "fighter", "knight", "archer"];
 
 let _nextId = 1;
 
@@ -6,16 +8,10 @@ function randomAntType() {
   return ANT_TYPES[Math.floor(Math.random() * ANT_TYPES.length)];
 }
 
-/**
- * Create a single ant entity.
- * @param {'computer'|'player'} owner
- * @param {string} type  - One of ANT_TYPES
- * @param {number} col
- * @param {number} row
- */
 function createAnt(owner, type, col, row) {
   return {
     id: `ant-${_nextId++}`,
+    name: generateFullName(),
     owner,
     type,
     col,
@@ -23,12 +19,6 @@ function createAnt(owner, type, col, row) {
   };
 }
 
-/**
- * Generate 10 ants per side placed in the first/last two rows.
- * Positions are unique per row set.
- * @param {number} mapWidth
- * @param {number} mapHeight
- */
 function generateAnts(mapWidth, mapHeight) {
   _nextId = 1;
 
@@ -50,11 +40,11 @@ function generateAnts(mapWidth, mapHeight) {
   const ants = [];
 
   for (const pos of uniquePositions([0, 1], 10)) {
-    ants.push(createAnt('computer', randomAntType(), pos.col, pos.row));
+    ants.push(createAnt("computer", randomAntType(), pos.col, pos.row));
   }
 
   for (const pos of uniquePositions([mapHeight - 2, mapHeight - 1], 10)) {
-    ants.push(createAnt('player', randomAntType(), pos.col, pos.row));
+    ants.push(createAnt("player", randomAntType(), pos.col, pos.row));
   }
 
   return ants;
