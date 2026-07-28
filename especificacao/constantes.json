@@ -1,0 +1,42 @@
+{
+  "versaoSchema": 1,
+  "mapa": {
+    "largura": 15,
+    "altura": 19,
+    "fracaoRocha": 0.12,
+    "raioCamara": 1
+  },
+  "economia": {
+    "biomassaInicial": 4,
+    "rendaBase": 2,
+    "hexPorBonus": 8,
+    "bonusPorGrupo": 1,
+    "tetoBiomassa": 20
+  },
+  "regras": {
+    "tetoUnidades": 10,
+    "maxArmadilhas": 3,
+    "limiteTurnos": 150,
+    "danoMinimo": 1
+  },
+  "unidades": {
+    "rainha": { "vida": 120, "ataque": 0, "defesa": 1, "movimento": 0, "visao": 3, "custo": 0 },
+    "operaria": { "vida": 8, "ataque": 1, "defesa": 0, "movimento": 1, "visao": 1, "custo": 2 },
+    "guerreira": { "vida": 20, "ataque": 6, "defesa": 2, "movimento": 1, "visao": 2, "custo": 4 },
+    "cacadora": { "vida": 12, "ataque": 5, "defesa": 0, "movimento": 2, "visao": 3, "custo": 4 },
+    "mago": { "vida": 10, "ataque": 4, "defesa": 0, "movimento": 1, "visao": 2, "custo": 5 }
+  },
+  "habilidades": {
+    "defender": { "defesaBonus": 3 },
+    "disparo": { "alcance": 3 },
+    "armadilha": { "dano": 8, "raio": 0 },
+    "cura": { "alcance": 2, "valor": 6 },
+    "explosao": { "alcance": 3, "raio": 1 },
+    "teleporte": { "alcance": 2 }
+  },
+  "dificuldade": {
+    "facil": { "aleatorio": 0.25 },
+    "medio": { "aleatorio": 0.0 },
+    "dificil": { "aleatorio": 0.0 }
+  }
+}

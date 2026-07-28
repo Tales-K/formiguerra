@@ -1,0 +1,10 @@
+{
+  "name": "formigueiro",
+  "version": "1.0.0",
+  "description": "Jogo de estratégia por turnos em tabuleiro hexagonal com névoa de guerra. Site estático, sem servidor.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "serve": "python3 -m http.server 8099 --directory .."
+  }
+}

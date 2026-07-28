@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Formigueiro</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: #0b0b12; color: #e6e6ea;
+    font-family: 'Segoe UI', system-ui, sans-serif; }
+
+  .oculto { display: none !important; }
+
+  #tela-jogo { display: flex; height: 100vh; }
+  #area-mapa { flex: 1; overflow: auto; background: #050508; position: relative; min-width: 0; }
+  #canvas-hex { display: block; transform-origin: top left; }
+
+  #dica { position: sticky; bottom: 0; width: 100%; background: rgba(60,200,110,.9);
+    color: #04240f; font-size: .8rem; font-weight: 700; text-align: center; padding: 6px;
+    letter-spacing: .04em; z-index: 5; }
+
+  #painel { width: 250px; min-width: 250px; background: #12121f; border-left: 2px solid #24243c;
+    display: flex; flex-direction: column; overflow-y: auto; padding: 14px 12px 18px; gap: 14px; }
+
+  .barra-topo { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; }
+  .barra-topo .turno { color: #9a9ab0; text-transform: uppercase; letter-spacing: .08em; }
+  .barra-topo .bio { font-weight: 800; color: #7ad46a; font-size: 1.1rem; }
+
+  .titulo-secao { font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; color: #6b6b84;
+    border-bottom: 1px solid #24243c; padding-bottom: 4px; }
+
+  #producao { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .btn-prod { display: flex; flex-direction: column; align-items: center; gap: 2px; background: #1b1b30;
+    border: 1px solid #2c2c46; border-radius: 6px; padding: 7px 4px; cursor: pointer; color: #d6d6e2;
+    font-size: .72rem; transition: border-color .12s, background .12s; }
+  .btn-prod .g { font-size: 1.2rem; }
+  .btn-prod .c { color: #c9a84c; font-weight: 700; }
+  .btn-prod:hover:not(:disabled) { border-color: #4a4a7a; background: #22223c; }
+  .btn-prod:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-prod.ativo { border-color: #7ad46a; background: #17301d; }
+
+  #acoes-unidade { display: flex; flex-direction: column; gap: 6px; }
+  .btn-acao { background: #241a2c; border: 1px solid #45304a; color: #e0c8ea; padding: 7px;
+    border-radius: 5px; cursor: pointer; font-size: .78rem; text-align: left; }
+  .btn-acao:hover { background: #32233c; }
+  .btn-acao.ativo { border-color: #ffe066; color: #ffe066; }
+  .vazio { font-size: .74rem; color: #55556a; text-align: center; padding: 6px 0; }
+
+  .btn-principal { background: #c9a84c; color: #16161f; border: none; padding: 10px; width: 100%;
+    font-size: .82rem; font-weight: 700; border-radius: 5px; cursor: pointer; text-transform: uppercase;
+    letter-spacing: .05em; }
+  .btn-principal:hover { background: #e0c060; }
+  .btn-sec { background: #22223a; color: #cfcfe0; border: 1px solid #34345a; padding: 8px; width: 100%;
+    font-size: .78rem; border-radius: 5px; cursor: pointer; }
+  .btn-sec:hover { background: #2c2c4a; }
+  .empurra { margin-top: auto; display: flex; flex-direction: column; gap: 7px; }
+
+  .overlay { position: fixed; inset: 0; background: rgba(6,6,12,.86); display: flex;
+    align-items: center; justify-content: center; z-index: 50; }
+  .caixa { background: #14141f; border: 1px solid #2c2c46; border-radius: 10px; padding: 28px 26px;
+    width: 380px; max-width: 92vw; display: flex; flex-direction: column; gap: 14px; }
+  .caixa h1 { font-size: 2rem; letter-spacing: .06em; color: #c9a84c; text-align: center; }
+  .caixa h2 { font-size: 1.1rem; color: #d6d6e2; }
+  .caixa p.sub { text-align: center; color: #8a8aa2; font-size: .82rem; margin-top: -8px; }
+  .lista-saves { display: flex; flex-direction: column; gap: 6px; max-height: 46vh; overflow-y: auto; }
+  .save-item { display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    background: #1b1b2e; border: 1px solid #2c2c46; border-radius: 6px; padding: 8px 10px; }
+  .save-item .info { display: flex; flex-direction: column; min-width: 0; }
+  .save-item .nome { font-size: .82rem; color: #e0e0ea; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .save-item .meta { font-size: .68rem; color: #7a7a92; }
+  .save-item.velho .nome { color: #6a6a80; }
+  .save-item button { flex-shrink: 0; }
+  .mini { padding: 5px 9px; font-size: .7rem; border-radius: 4px; cursor: pointer; border: none; }
+  .mini.carregar { background: #2a8a46; color: #eafff0; }
+  .mini.apagar { background: #7a2a2a; color: #ffe6e6; }
+  .dificuldades { display: flex; flex-direction: column; gap: 7px; }
+
+  #resultado h1 { font-size: 1.6rem; }
+
+  #tooltip { position: fixed; display: none; background: rgba(8,8,18,.96); border: 1px solid #45457a;
+    border-radius: 6px; padding: 8px 11px; font-size: .78rem; max-width: 250px; pointer-events: none;
+    z-index: 999; line-height: 1.35; }
+  .tt-cab { display: flex; justify-content: space-between; font-weight: 700; color: #e6c86a;
+    border-bottom: 1px solid #33335a; padding-bottom: 4px; margin-bottom: 5px; }
+  .tt-grid { display: grid; grid-template-columns: auto auto auto auto; gap: 1px 8px; font-size: .72rem;
+    color: #b0b0c8; margin-bottom: 5px; }
+  .tt-grid b { color: #e6e6f0; }
+  .tt-hab { margin-top: 5px; }
+  .tt-hab b { color: #9ad0ff; font-size: .68rem; letter-spacing: .05em; }
+  .tt-hab p { color: #b8b8c8; font-size: .72rem; }
+  .tt-aviso { margin-top: 6px; color: #ff8a6a; font-size: .72rem; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div id="tela-jogo" class="oculto">
+  <div id="area-mapa"><canvas id="canvas-hex"></canvas>
+    <div id="dica" class="oculto">Clique numa célula destacada · ESC cancela</div>
+  </div>
+  <div id="painel">
+    <div class="barra-topo">
+      <span class="turno" id="lbl-turno">Turno 1</span>
+      <span class="bio" id="lbl-bio">4</span>
+    </div>
+    <div>
+      <div class="titulo-secao">Produzir</div>
+      <div id="producao"></div>
+    </div>
+    <div>
+      <div class="titulo-secao">Unidade</div>
+      <div id="acoes-unidade"><p class="vazio">Selecione uma formiga.</p></div>
+    </div>
+    <div class="empurra">
+      <button class="btn-principal" id="btn-passar">Encerrar turno ⏎</button>
+      <button class="btn-sec" id="btn-menu">Menu (ESC)</button>
+    </div>
+  </div>
+</div>
+
+<div id="tela-menu" class="overlay">
+  <div class="caixa">
+    <h1>FORMIGUEIRO</h1>
+    <p class="sub">Escave no escuro. Ache a rainha inimiga.</p>
+    <button class="btn-principal" id="btn-novo">Novo Jogo</button>
+    <button class="btn-sec" id="btn-carregar">Carregar Jogo</button>
+    <div id="painel-dificuldade" class="dificuldades oculto"></div>
+    <div id="painel-saves" class="oculto"></div>
+  </div>
+</div>
+
+<div id="tela-pausa" class="overlay oculto">
+  <div class="caixa">
+    <h2>Pausa</h2>
+    <button class="btn-principal" id="btn-continuar">Continuar</button>
+    <button class="btn-sec" id="btn-salvar">Salvar</button>
+    <button class="btn-sec" id="btn-salvar-sair">Salvar e Sair</button>
+    <button class="btn-sec" id="btn-sair">Sair sem Salvar</button>
+  </div>
+</div>
+
+<div id="tela-fim" class="overlay oculto">
+  <div class="caixa" id="resultado">
+    <h1 id="lbl-resultado">—</h1>
+    <button class="btn-principal" id="btn-voltar-menu">Voltar ao Menu</button>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
